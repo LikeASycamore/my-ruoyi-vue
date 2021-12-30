@@ -10,6 +10,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ruoyi.common.core.domain.WxpusherEntity;
 import com.ruoyi.quartz.domain.LotteryResult;
+import com.ruoyi.system.service.ISysDictDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -29,11 +30,12 @@ public class RyTask {
 
     @Autowired
     private JavaMailSender mailSender;
+    @Autowired
+    private ISysDictDataService dictDataService;
 
     final String SIGN_URL = "https://api.juejin.cn/growth_api/v1/check_in";
     final String LOTTERY_URL = "https://api.juejin.cn/growth_api/v1/lottery/draw";
     final String WX_PUSHER = "http://wxpusher.zjiecode.com/api/send/message";
-    final String COOKIE = "_ga=GA1.2.1397669210.1621576261; n_mh=Yo4egwfD1gF9yHg-RDVfM0fCtRvD4xOH9aYx9Td2DX4; odin_tt=d3f95992cad82d0bcf5762f8fca942b95b2660a46b5811103f6ab41d77702abb491308ba7dae4b31ae3ca06f17acef255cbaca4bf10ac75406c7add43bed8296; MONITOR_WEB_ID=c1740511-06e7-46bc-ab3a-113648140e23; passport_csrf_token_default=0dfcee686f8ee3901160b0c1e61c9d99; passport_csrf_token=0dfcee686f8ee3901160b0c1e61c9d99; passport_auth_status=996c24fe968351d4c70c62847ab3c37c%2C; passport_auth_status_ss=996c24fe968351d4c70c62847ab3c37c%2C; sid_guard=ff17bf66e0f42b5efe15e753d5050249%7C1631582354%7C5184000%7CSat%2C+13-Nov-2021+01%3A19%3A14+GMT; uid_tt=0acc219fbaf38a391cd4f3ab236656da; uid_tt_ss=0acc219fbaf38a391cd4f3ab236656da; sid_tt=ff17bf66e0f42b5efe15e753d5050249; sessionid=ff17bf66e0f42b5efe15e753d5050249; sessionid_ss=ff17bf66e0f42b5efe15e753d5050249; sid_ucp_v1=1.0.0-KGNkM2I2YzZhZjU2NDVjYmVlOTI4ZjE3ZTdjMWJiNTE5MmU0NGI4NzIKFwiHssD_743sARCS8f-JBhiwFDgCQPEHGgJsZiIgZmYxN2JmNjZlMGY0MmI1ZWZlMTVlNzUzZDUwNTAyNDk; ssid_ucp_v1=1.0.0-KGNkM2I2YzZhZjU2NDVjYmVlOTI4ZjE3ZTdjMWJiNTE5MmU0NGI4NzIKFwiHssD_743sARCS8f-JBhiwFDgCQPEHGgJsZiIgZmYxN2JmNjZlMGY0MmI1ZWZlMTVlNzUzZDUwNTAyNDk; _gid=GA1.2.2076561506.1632617718";
 
     public void ryMultipleParams(String s, Boolean b, Long l, Double d, Integer i) {
         System.out.println(StringUtils.format("执行多参方法： 字符串类型{}，布尔类型{}，长整型{}，浮点型{}，整形{}", s, b, l, d, i));
@@ -48,9 +50,10 @@ public class RyTask {
     }
 
     public void sign() {
+        String cookie = dictDataService.selectDictLabel("jujin", "cookie");
         String result = HttpRequest.post(SIGN_URL)
                 //头信息，多个头信息多次调用此方法即可
-                .header(Header.COOKIE, COOKIE)
+                .header(Header.COOKIE, cookie)
                 //超时，毫秒
                 .timeout(3000)
                 .execute().body();
@@ -70,9 +73,10 @@ public class RyTask {
      * @return 奖品名称
      */
     private String lottery() {
+        String cookie = dictDataService.selectDictLabel("jujin", "cookie");
         String result = HttpRequest.post(LOTTERY_URL)
                 //头信息，多个头信息多次调用此方法即可
-                .header(Header.COOKIE, COOKIE)
+                .header(Header.COOKIE, cookie)
                 //超时，毫秒
                 .timeout(3000)
                 .execute().body();
@@ -128,7 +132,7 @@ public class RyTask {
         entity.setContent(message);
         entity.setUrl("http://wxpusher.zjiecode.com");
 
-        entity.setSummary("掘金抽奖");
+        entity.setSummary(message);
         entity.setContentType(1L);
 
         Map<String, Object> paramMap = BeanUtil.beanToMap(entity);
